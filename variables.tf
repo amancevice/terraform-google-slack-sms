@@ -1,6 +1,14 @@
 /**
  * Required Variables
  */
+variable "aws_access_key_id" {
+  description = "AWS access key ID."
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS secret access key."
+}
+
 variable "bucket_name" {
   description = "Cloud Storage bucket for storing Cloud Function code archives."
 }
@@ -20,6 +28,11 @@ variable "verification_token" {
 /**
  * Optional Variables
  */
+variable "aws_region" {
+  description = "AWS region."
+  default     = "us-east-1"
+}
+
 variable "bucket_storage_class" {
   description = "Bucket storage class."
   default     = "MULTI_REGIONAL"

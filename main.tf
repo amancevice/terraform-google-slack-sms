@@ -3,9 +3,11 @@ data "template_file" "config" {
   template = "${var.config}"
 
   vars {
-    color              = "${var.color}"
-    slash_command      = "${var.slash_command}"
-    verification_token = "${var.verification_token}"
+    aws_access_key_id     = "${var.aws_access_key_id}"
+    aws_secret_access_key = "${var.aws_secret_access_key}"
+    color                 = "${var.color}"
+    slash_command         = "${var.slash_command}"
+    verification_token    = "${var.verification_token}"
   }
 }
 
@@ -31,7 +33,7 @@ resource "google_storage_bucket_iam_member" "member" {
 // Slash Command Cloud Storage archive
 resource "google_storage_bucket_object" "slash_command_archive" {
   bucket = "${google_storage_bucket.slack_sms_bucket.name}"
-  name   = "${var.bucket_prefix}${var.slash_command_function_name}.zip"
+  name   = "${var.bucket_prefix}${var.slash_command_function_name}-${module.slack_sms.version}.zip"
   source = "${module.slack_sms.slash_command_output_path}"
 }
 
