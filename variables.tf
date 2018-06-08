@@ -37,11 +37,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "bucket_storage_class" {
-  description = "Bucket storage class."
-  default     = "MULTI_REGIONAL"
-}
-
 variable "bucket_prefix" {
   description = "Prefix for Cloud Storage bucket."
   default     = ""
@@ -132,17 +127,17 @@ variable "slash_command_timeout" {
   default     = 10
 }
 
-variable "sms_publisher_function_name" {
+variable "sms_function_name" {
   description = "Cloud Function for publishing events from Slack to Pub/Sub."
-  default     = "slack-sms-publisher"
+  default     = "slack-sms"
 }
 
-variable "sms_publisher_memory" {
+variable "sms_memory" {
   description = "Memory for Cloud Function."
   default     = 512
 }
 
-variable "sms_publisher_timeout" {
+variable "sms_timeout" {
   description = "Timeout in seconds for Cloud Function."
   default     = 60
 }
