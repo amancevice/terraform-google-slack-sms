@@ -46,7 +46,7 @@ data "template_file" "package" {
 
 data "archive_file" "archive" {
   type        = "zip"
-  output_path = "${path.module}/dist/${var.sms_publisher_function_name}-${local.version}.zip"
+  output_path = "${path.module}/dist/${var.sms_function_name}-${local.version}.zip"
 
   source {
     content  = "${data.template_file.config.rendered}"
@@ -66,18 +66,18 @@ data "archive_file" "archive" {
 
 resource "google_storage_bucket_object" "archive" {
   bucket = "${var.bucket_name}"
-  name   = "${var.bucket_prefix}${var.sms_publisher_function_name}-${local.version}.zip"
+  name   = "${var.bucket_prefix}${var.sms_function_name}-${local.version}.zip"
   source = "${data.archive_file.archive.output_path}"
 }
 
 resource "google_cloudfunctions_function" "function" {
-  name                  = "${var.sms_publisher_function_name}"
+  name                  = "${var.sms_function_name}"
   description           = "Slack SMS slash command"
-  available_memory_mb   = "${var.sms_publisher_memory}"
+  available_memory_mb   = "${var.sms_memory}"
   source_archive_bucket = "${var.bucket_name}"
   source_archive_object = "${google_storage_bucket_object.archive.name}"
   trigger_topic         = "${var.callback_id}"
-  timeout               = "${var.sms_publisher_timeout}"
+  timeout               = "${var.sms_timeout}"
   entry_point           = "consumeEvent"
 
   labels {
