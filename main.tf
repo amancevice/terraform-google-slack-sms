@@ -1,54 +1,100 @@
-// Config template
+provider "archive" {
+  version = "~> 1.0"
+}
+
+provider "template" {
+  version = "~> 1.0"
+}
+
+locals {
+  version = "0.1.0"
+}
+
+module "group_sms" {
+  source                                = "amancevice/group-sms/aws"
+  version                               = "0.1.3"
+  default_sender_id                     = "${var.group_sms_default_sender_id}"
+  default_sms_type                      = "${var.group_sms_default_sms_type}"
+  delivery_status_iam_role_arn          = "${var.group_sms_delivery_status_iam_role_arn}"
+  delivery_status_success_sampling_rate = "${var.group_sms_delivery_status_success_sampling_rate}"
+  monthly_spend_limit                   = "${var.group_sms_monthly_spend_limit}"
+  subscriptions                         = ["${var.group_sms_subscriptions}"]
+  topic_display_name                    = "${var.group_sms_topic_display_name}"
+  topic_name                            = "${var.group_sms_topic_name}"
+  usage_report_s3_bucket                = "${var.group_sms_usage_report_s3_bucket}"
+}
+
 data "template_file" "config" {
-  template = "${var.config}"
+  template = "${file("${path.module}/src/config.tpl")}"
 
   vars {
-    aws_access_key_id     = "${var.aws_access_key_id}"
-    aws_secret_access_key = "${var.aws_secret_access_key}"
-    color                 = "${var.color}"
-    slash_command         = "${var.slash_command}"
-    verification_token    = "${var.verification_token}"
+    access_key_id     = "${var.aws_access_key_id}"
+    secret_access_key = "${var.aws_secret_access_key}"
+    region            = "${var.aws_region}"
+    topic_arn         = "${module.group_sms.topic_arn}"
+    element           = "${var.element}"
   }
 }
 
-// Source code module
-module "slack_sms" {
-  source = "github.com/amancevice/slack-sms" //"?ref=0.0.1"
-  config = "${data.template_file.config.rendered}"
+data "template_file" "package" {
+  template = "${file("${path.module}/src/package.tpl")}"
+
+  vars {
+    version = "${local.version}"
+  }
 }
 
-// Cloud Storage Bucket for storing Cloud Function archives
-resource "google_storage_bucket" "slack_sms_bucket" {
-  name          = "${var.bucket_name}"
-  storage_class = "${var.bucket_storage_class}"
+data "archive_file" "archive" {
+  type        = "zip"
+  output_path = "${path.module}/dist/${var.sms_publisher_function_name}-${local.version}.zip"
+
+  source {
+    content  = "${data.template_file.config.rendered}"
+    filename = "config.json"
+  }
+
+  source {
+    content  = "${file("${path.module}/src/index.js")}"
+    filename = "index.js"
+  }
+
+  source {
+    content  = "${data.template_file.package.rendered}"
+    filename = "package.json"
+  }
 }
 
-// Add service acct as writer to Cloud Storage Bucket
-resource "google_storage_bucket_iam_member" "member" {
-  bucket = "${google_storage_bucket.slack_sms_bucket.name}"
-  role   = "roles/storage.objectCreator"
-  member = "serviceAccount:${var.service_account}"
+resource "google_storage_bucket_object" "archive" {
+  bucket = "${var.bucket_name}"
+  name   = "${var.bucket_prefix}${var.sms_publisher_function_name}-${local.version}.zip"
+  source = "${data.archive_file.archive.output_path}"
 }
 
-// Slash Command Cloud Storage archive
-resource "google_storage_bucket_object" "slash_command_archive" {
-  bucket = "${google_storage_bucket.slack_sms_bucket.name}"
-  name   = "${var.bucket_prefix}${var.slash_command_function_name}-${module.slack_sms.version}.zip"
-  source = "${module.slack_sms.slash_command_output_path}"
-}
-
-// Slash Command Cloud Function
-resource "google_cloudfunctions_function" "slash_command" {
-  name                  = "${var.slash_command_function_name}"
-  description           = "Slack /slash command HTTP handler"
-  available_memory_mb   = "${var.slash_command_memory}"
-  source_archive_bucket = "${google_storage_bucket.slack_sms_bucket.name}"
-  source_archive_object = "${google_storage_bucket_object.slash_command_archive.name}"
-  trigger_http          = true
-  timeout               = "${var.slash_command_timeout}"
-  entry_point           = "slashCommand"
+resource "google_cloudfunctions_function" "function" {
+  name                  = "${var.sms_publisher_function_name}"
+  description           = "Slack SMS slash command"
+  available_memory_mb   = "${var.sms_publisher_memory}"
+  source_archive_bucket = "${var.bucket_name}"
+  source_archive_object = "${google_storage_bucket_object.archive.name}"
+  trigger_topic         = "${var.callback_id}"
+  timeout               = "${var.sms_publisher_timeout}"
+  entry_point           = "consumeEvent"
 
   labels {
     deployment-tool = "terraform"
   }
+}
+
+module "slash_command" {
+  source             = "amancevice/slack-slash-command/google"
+  version            = "0.2.0"
+  bucket_name        = "${var.bucket_name}"
+  bucket_prefix      = "${var.bucket_prefix}"
+  function_name      = "${var.slash_command_function_name}"
+  memory             = "${var.slash_command_memory}"
+  response           = "${var.slash_command_response}"
+  response_type      = "${var.slash_command_response_type}"
+  timeout            = "${var.slash_command_timeout}"
+  verification_token = "${var.verification_token}"
+  web_api_token      = "${var.web_api_token}"
 }

@@ -1,4 +1,14 @@
+output "sns_topic_arn" {
+  description = "AWS Topic ARN."
+  value       = "${module.group_sms.topic_arn}"
+}
+
+output "sns_topic_subscriptions" {
+  description = "AWS Topic ARN."
+  value       = "${module.group_sms.topic_subscriptions}"
+}
+
 output "slash_command_url" {
-  description = "Endpoint for slash commands to configure in Slack."
-  value       = "${google_cloudfunctions_function.slash_command.https_trigger_url}"
+  description = "Slack slash command Request URL."
+  value       = "${module.slash_command.request_url}"
 }
