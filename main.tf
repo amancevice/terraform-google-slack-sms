@@ -7,7 +7,22 @@ provider "template" {
 }
 
 locals {
-  version = "0.1.0"
+  version = "0.2.0"
+
+  slash_command_response {
+    callback_id  = "${var.callback_id}"
+    submit_label = "Send"
+    title        = "${var.dialog_title}"
+    elements     = [
+      {
+        hint       = "${var.dialog_element_hint}"
+        label      = "${var.dialog_element_label}"
+        max_length = "${var.dialog_element_max_length}"
+        name       = "${var.callback_id}"
+        type       = "textarea"
+      }
+    ]
+  }
 }
 
 module "group_sms" {
@@ -32,7 +47,7 @@ data "template_file" "config" {
     secret_access_key = "${var.aws_secret_access_key}"
     region            = "${var.aws_region}"
     topic_arn         = "${module.group_sms.topic_arn}"
-    element           = "${var.element}"
+    callback_id       = "${var.callback_id}"
   }
 }
 
@@ -72,7 +87,7 @@ resource "google_storage_bucket_object" "archive" {
 
 resource "google_cloudfunctions_function" "function" {
   name                  = "${var.sms_function_name}"
-  description           = "Slack SMS slash command"
+  description           = "Slack SMS publisher"
   available_memory_mb   = "${var.sms_memory}"
   source_archive_bucket = "${var.bucket_name}"
   source_archive_object = "${google_storage_bucket_object.archive.name}"
@@ -86,15 +101,21 @@ resource "google_cloudfunctions_function" "function" {
 }
 
 module "slash_command" {
-  source             = "amancevice/slack-slash-command/google"
-  version            = "0.2.0"
-  bucket_name        = "${var.bucket_name}"
-  bucket_prefix      = "${var.bucket_prefix}"
-  function_name      = "${var.slash_command_function_name}"
-  memory             = "${var.slash_command_memory}"
-  response           = "${var.slash_command_response}"
-  response_type      = "${var.slash_command_response_type}"
-  timeout            = "${var.slash_command_timeout}"
-  verification_token = "${var.verification_token}"
-  web_api_token      = "${var.web_api_token}"
+  source                          = "amancevice/slack-slash-command/google"
+  version                         = "0.3.0"
+  auth_channels_exclude           = ["${var.slash_command_auth_channels_exclude}"]
+  auth_channels_include           = ["${var.slash_command_auth_channels_include}"]
+  auth_channels_permission_denied = "${var.slash_command_auth_channels_permission_denied}"
+  auth_users_exclude              = ["${var.slash_command_auth_users_exclude}"]
+  auth_users_include              = ["${var.slash_command_auth_users_include}"]
+  auth_users_permission_denied    = "${var.slash_command_auth_users_permission_denied}"
+  bucket_name                     = "${var.bucket_name}"
+  bucket_prefix                   = "${var.bucket_prefix}"
+  function_name                   = "${var.slash_command_function_name}"
+  memory                          = "${var.slash_command_memory}"
+  response                        = "${local.slash_command_response}"
+  response_type                   = "${var.slash_command_response_type}"
+  timeout                         = "${var.slash_command_timeout}"
+  verification_token              = "${var.verification_token}"
+  web_api_token                   = "${var.web_api_token}"
 }

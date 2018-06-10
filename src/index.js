@@ -39,7 +39,7 @@ function publishMessage(e) {
   console.log(`MESSAGE ${JSON.stringify(e)}`);
   return SNS.publish(
     {
-      Message: e.submission[config.slack.element],
+      Message: e.submission[config.slack.callback_id],
       TopicArn: config.aws.topic_arn
     },
     (err, data) => {

@@ -6,6 +6,6 @@
     "topic_arn": "${topic_arn}"
   },
   "slack": {
-    "element": "${element}"
+    "callback_id": "${callback_id}"
   }
 }
