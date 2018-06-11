@@ -113,7 +113,7 @@ module "slash_command" {
   bucket_prefix                   = "${var.bucket_prefix}"
   description                     = "${var.slash_command_description}"
   function_name                   = "${var.slash_command_function_name}"
-  lables                          = "${var.slash_command_labels}"
+  labels                          = "${var.slash_command_labels}"
   memory                          = "${var.slash_command_memory}"
   response                        = "${local.dialog}"
   response_type                   = "dialog"
