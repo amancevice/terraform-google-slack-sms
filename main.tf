@@ -7,9 +7,9 @@ provider "template" {
 }
 
 locals {
-  version = "0.2.0"
+  version = "0.2.1"
 
-  slash_command_response {
+  dialog {
     callback_id  = "${var.callback_id}"
     submit_label = "Send"
     title        = "${var.dialog_title}"
@@ -102,7 +102,7 @@ resource "google_cloudfunctions_function" "function" {
 
 module "slash_command" {
   source                          = "amancevice/slack-slash-command/google"
-  version                         = "0.3.0"
+  version                         = "0.3.1"
   auth_channels_exclude           = ["${var.slash_command_auth_channels_exclude}"]
   auth_channels_include           = ["${var.slash_command_auth_channels_include}"]
   auth_channels_permission_denied = "${var.slash_command_auth_channels_permission_denied}"
@@ -111,10 +111,12 @@ module "slash_command" {
   auth_users_permission_denied    = "${var.slash_command_auth_users_permission_denied}"
   bucket_name                     = "${var.bucket_name}"
   bucket_prefix                   = "${var.bucket_prefix}"
+  description                     = "${var.slash_command_description}"
   function_name                   = "${var.slash_command_function_name}"
+  lables                          = "${var.slash_command_labels}"
   memory                          = "${var.slash_command_memory}"
-  response                        = "${local.slash_command_response}"
-  response_type                   = "${var.slash_command_response_type}"
+  response                        = "${local.dialog}"
+  response_type                   = "dialog"
   timeout                         = "${var.slash_command_timeout}"
   verification_token              = "${var.verification_token}"
   web_api_token                   = "${var.web_api_token}"

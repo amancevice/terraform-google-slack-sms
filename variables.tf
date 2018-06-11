@@ -145,19 +145,29 @@ variable "slash_command_auth_users_permission_denied" {
   }
 }
 
+variable "slash_command_description" {
+  description = "Description of the function."
+  default     = "Slack-SMS slash command"
+}
+
 variable "slash_command_function_name" {
   description = "Cloud Function Name."
   default     = "slack-sms-slash-command"
 }
 
+variable "slash_command_labels" {
+  description = "A set of key/value label pairs to assign to the function."
+  type        = "map"
+
+  default {
+    app             = "slack-sms"
+    deployment-tool = "terraform"
+  }
+}
+
 variable "slash_command_memory" {
   description = "Memory for Cloud Function."
   default     = 512
-}
-
-variable "slash_command_response_type" {
-  description = "Response type of command."
-  default     = "dialog"
 }
 
 variable "slash_command_timeout" {
