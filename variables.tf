@@ -176,9 +176,24 @@ variable "slash_command_timeout" {
 }
 
 // SMS
+variable "sms_description" {
+  description = "Description of the function."
+  default     = "Slack-SMS publisher"
+}
+
 variable "sms_function_name" {
   description = "Cloud Function for publishing events from Slack to Pub/Sub."
   default     = "slack-sms"
+}
+
+variable "sms_labels" {
+  description = "A set of key/value label pairs to assign to the function."
+  type        = "map"
+
+  default {
+    app             = "slack-sms"
+    deployment-tool = "terraform"
+  }
 }
 
 variable "sms_memory" {

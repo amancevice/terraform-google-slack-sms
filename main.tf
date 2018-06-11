@@ -7,7 +7,7 @@ provider "template" {
 }
 
 locals {
-  version = "0.2.1"
+  version = "0.2.2"
 
   dialog {
     callback_id  = "${var.callback_id}"
@@ -86,18 +86,15 @@ resource "google_storage_bucket_object" "archive" {
 }
 
 resource "google_cloudfunctions_function" "function" {
-  name                  = "${var.sms_function_name}"
-  description           = "Slack SMS publisher"
   available_memory_mb   = "${var.sms_memory}"
+  description           = "${var.sms_description}"
+  entry_point           = "consumeEvent"
+  labels                = "${var.sms_labels}"
+  name                  = "${var.sms_function_name}"
   source_archive_bucket = "${var.bucket_name}"
   source_archive_object = "${google_storage_bucket_object.archive.name}"
-  trigger_topic         = "${var.callback_id}"
   timeout               = "${var.sms_timeout}"
-  entry_point           = "consumeEvent"
-
-  labels {
-    deployment-tool = "terraform"
-  }
+  trigger_topic         = "${var.callback_id}"
 }
 
 module "slash_command" {
