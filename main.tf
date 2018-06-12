@@ -7,7 +7,7 @@ provider "template" {
 }
 
 locals {
-  version = "0.2.4"
+  version = "0.3.0"
 
   dialog {
     callback_id  = "${var.callback_id}"
@@ -81,7 +81,7 @@ data "archive_file" "archive" {
 
 resource "google_storage_bucket_object" "archive" {
   bucket = "${var.bucket_name}"
-  name   = "${var.bucket_prefix}${var.sms_function_name}-${local.version}.zip"
+  name   = "${var.bucket_prefix}${var.sms_function_name}-${local.version}-${md5(file("${data.archive_file.archive.output_path}"))}.zip"
   source = "${data.archive_file.archive.output_path}"
 }
 
