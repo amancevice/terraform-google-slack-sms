@@ -17,11 +17,6 @@ variable "bucket_name" {
   description = "Cloud Storage bucket for storing Cloud Function code archives."
 }
 
-variable "bucket_prefix" {
-  description = "Prefix for Cloud Storage bucket."
-  default     = ""
-}
-
 // Slack
 variable "verification_token" {
   description = "Slack verification token."

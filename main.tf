@@ -7,7 +7,7 @@ provider "template" {
 }
 
 locals {
-  version = "0.4.0"
+  version = "0.5.0"
 
   dialog {
     callback_id  = "${var.callback_id}"
@@ -39,8 +39,8 @@ module "group_sms" {
   usage_report_s3_bucket                = "${var.group_sms_usage_report_s3_bucket}"
 }
 
-data "template_file" "config" {
-  template = "${file("${path.module}/src/config.tpl")}"
+data "template_file" "sms_config" {
+  template   = "${file("${path.module}/src/config.tpl")}"
 
   vars {
     access_key_id     = "${var.aws_access_key_id}"
@@ -51,7 +51,7 @@ data "template_file" "config" {
   }
 }
 
-data "template_file" "package" {
+data "template_file" "sms_package" {
   template = "${file("${path.module}/src/package.tpl")}"
 
   vars {
@@ -59,12 +59,12 @@ data "template_file" "package" {
   }
 }
 
-data "archive_file" "archive" {
+data "archive_file" "sms_archive" {
   type        = "zip"
   output_path = "${path.module}/dist/${var.sms_function_name}-${local.version}.zip"
 
   source {
-    content  = "${data.template_file.config.rendered}"
+    content  = "${data.template_file.sms_config.rendered}"
     filename = "config.json"
   }
 
@@ -74,25 +74,25 @@ data "archive_file" "archive" {
   }
 
   source {
-    content  = "${data.template_file.package.rendered}"
+    content  = "${data.template_file.sms_package.rendered}"
     filename = "package.json"
   }
 }
 
-resource "google_storage_bucket_object" "archive" {
+resource "google_storage_bucket_object" "sms_archive" {
   bucket = "${var.bucket_name}"
-  name   = "${var.bucket_prefix}${var.sms_function_name}-${local.version}-${md5(file("${data.archive_file.archive.output_path}"))}.zip"
-  source = "${data.archive_file.archive.output_path}"
+  name   = "${var.sms_function_name}-${local.version}.zip"
+  source = "${data.archive_file.sms_archive.output_path}"
 }
 
-resource "google_cloudfunctions_function" "function" {
+resource "google_cloudfunctions_function" "sms_function" {
   available_memory_mb   = "${var.sms_memory}"
   description           = "${var.sms_description}"
   entry_point           = "consumeEvent"
   labels                = "${var.sms_labels}"
   name                  = "${var.sms_function_name}"
   source_archive_bucket = "${var.bucket_name}"
-  source_archive_object = "${google_storage_bucket_object.archive.name}"
+  source_archive_object = "${google_storage_bucket_object.sms_archive.name}"
   timeout               = "${var.sms_timeout}"
   trigger_topic         = "${var.callback_id}"
 }
@@ -107,7 +107,6 @@ module "slash_command" {
   auth_users_include              = ["${var.slash_command_auth_users_include}"]
   auth_users_permission_denied    = "${var.slash_command_auth_users_permission_denied}"
   bucket_name                     = "${var.bucket_name}"
-  bucket_prefix                   = "${var.bucket_prefix}"
   description                     = "${var.slash_command_description}"
   function_name                   = "${var.slash_command_function_name}"
   labels                          = "${var.slash_command_labels}"
