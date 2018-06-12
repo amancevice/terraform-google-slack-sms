@@ -99,7 +99,7 @@ resource "google_cloudfunctions_function" "function" {
 
 module "slash_command" {
   source                          = "amancevice/slack-slash-command/google"
-  version                         = "0.3.1"
+  version                         = "0.3.2"
   auth_channels_exclude           = ["${var.slash_command_auth_channels_exclude}"]
   auth_channels_include           = ["${var.slash_command_auth_channels_include}"]
   auth_channels_permission_denied = "${var.slash_command_auth_channels_permission_denied}"
