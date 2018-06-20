@@ -35,7 +35,7 @@ function decodeEvent(e) {
  *
  * @param {object} e Slack event object message.
  */
-function publishMessage(e) {
+function publishMessage(e, callback) {
   console.log(`MESSAGE ${JSON.stringify(e)}`);
   return SNS.publish({
       Message: e.submission[config.slack.callback_id],
@@ -43,7 +43,7 @@ function publishMessage(e) {
     }, (err, data) => {
       if (err) throw err;
       console.log(`SNS ${JSON.stringify(data)}`);
-      return e;
+      callback();
     });
 }
 
@@ -57,8 +57,7 @@ exports.consumeEvent = (event, callback) => {
   Promise.resolve(event.data)
     .then(logEvent)
     .then(decodeEvent)
-    .then(publishMessage)
-    .then(callback)
+    .then((e) => publishMessage(e, callback))
     .catch((err) => {
       console.error(err);
       callback();
