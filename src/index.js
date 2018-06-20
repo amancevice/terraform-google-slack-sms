@@ -37,14 +37,12 @@ function decodeEvent(e) {
  */
 function publishMessage(e) {
   console.log(`MESSAGE ${JSON.stringify(e)}`);
-  return SNS.publish(
-    {
+  return SNS.publish({
       Message: e.submission[config.slack.callback_id],
       TopicArn: config.aws.topic_arn
-    },
-    (err, data) => {
+    }, (err, data) => {
       if (err) throw err;
-      console.log(`SNS ${data}`);
+      console.log(`SNS ${JSON.stringify(data)}`);
       return e;
     });
 }
